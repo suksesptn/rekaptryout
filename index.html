@@ -3,178 +3,347 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portal Cek Nilai Tryout UTBK</title>
+    <title>Portal Hasil UTBK & Rekomendasi Jurusan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f4f7f6;
-            color: #333;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            padding: 20px;
-        }
-        .container {
-            background-color: #fff;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            width: 100%;
-            max-width: 500px;
-        }
-        h2 {
-            text-align: center;
-            color: #2c3e50;
-            margin-bottom: 20px;
-        }
-        .input-group {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-        input[type="text"] {
-            flex: 1;
-            padding: 12px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            font-size: 16px;
-        }
-        button {
-            padding: 12px 20px;
-            background-color: #3498db;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            font-size: 16px;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-        button:hover {
-            background-color: #2980b9;
-        }
-        #loading {
-            text-align: center;
-            display: none;
-            color: #7f8c8d;
-            margin-top: 10px;
-        }
-        .result-card {
-            display: none;
-            background-color: #f8f9fa;
-            border: 1px solid #e9ecef;
-            border-radius: 8px;
-            padding: 20px;
-            margin-top: 20px;
-        }
-        .result-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 8px 0;
-            border-bottom: 1px solid #eee;
-        }
-        .result-item:last-child {
-            border-bottom: none;
-        }
-        .label {
-            font-weight: bold;
-            color: #555;
-        }
-        .value {
-            color: #2c3e50;
-            text-align: right;
-            font-weight: 500;
-        }
-        .error {
-            color: #e74c3c;
-            text-align: center;
-            margin-top: 15px;
-            display: none;
-        }
+        /* Animasi transisi ringan */
+        .fade-in { animation: fadeIn 0.5s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        /* Warna untuk 3 TO Terbaik */
+        .top-score { background-color: #bbf7d0 !important; font-weight: bold; color: #166534; }
     </style>
 </head>
-<body>
+<body class="bg-gray-50 min-h-screen font-sans text-gray-800">
 
-<div class="container">
-    <h2>Cek Hasil Tryout UTBK</h2>
-    <div class="input-group">
-        <input type="text" id="nisInput" placeholder="Masukkan NIS Anda..." required>
-        <button onclick="cariData()">Cari</button>
-    </div>
+    <div class="max-w-5xl mx-auto p-4 py-8">
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-blue-800 mb-2">Portal Pemilihan Jurusan UTBK</h1>
+            <p class="text-gray-600">SMA Pesantren Unggul Al Bayan</p>
+        </div>
 
-    <div id="loading">Mencari data... Mohon tunggu.</div>
-    <div id="errorMsg" class="error">Data tidak ditemukan. Pastikan NIS benar.</div>
+        <div class="bg-white p-6 rounded-xl shadow-md mb-8 max-w-md mx-auto">
+            <label for="nisInput" class="block text-sm font-medium text-gray-700 mb-2">Masukkan NIS Anda:</label>
+            <div class="flex gap-2">
+                <input type="text" id="nisInput" placeholder="Contoh: 232410001" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                <button onclick="cariData()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition duration-200">Cari</button>
+            </div>
+            <p id="errorMessage" class="text-red-500 text-sm mt-2 hidden">NIS tidak ditemukan. Silakan periksa kembali.</p>
+        </div>
 
-    <div id="resultCard" class="result-card">
-        <div class="result-item"><span class="label">Nama:</span> <span class="value" id="resNama">-</span></div>
-        <div class="result-item"><span class="label">Kelas:</span> <span class="value" id="resKelas">-</span></div>
-        <div class="result-item"><span class="label">Rata-Rata TO 1-10:</span> <span class="value" id="resTO110">-</span></div>
-        <div class="result-item"><span class="label">Rata-Rata 3 Terbaik:</span> <span class="value" id="resTOTerbaik">-</span></div>
-        <div class="result-item"><span class="label">Pilihan 1:</span> <span class="value" id="resPil1">-</span></div>
-        <div class="result-item"><span class="label">Pilihan 2:</span> <span class="value" id="resPil2">-</span></div>
-        <div class="result-item"><span class="label">Pilihan 3 & 4:</span> <span class="value" id="resPil34">-</span></div>
-    </div>
-</div>
+        <div id="resultContainer" class="hidden fade-in space-y-6">
+            
+            <div class="bg-white p-6 rounded-xl shadow-md border-t-4 border-blue-600">
+                <h2 class="text-2xl font-bold text-gray-800" id="resNama">NAMA SISWA</h2>
+                <p class="text-gray-600 mt-1">NIS: <span id="resNis" class="font-medium"></span> | Kelas: <span id="resKelas" class="font-medium"></span></p>
+            </div>
 
-<script>
-    // PASTE URL WEB APP APPS SCRIPT ANDA DI BAWAH INI
-    const scriptURL = 'https://script.google.com/macros/s/AKfycbxPweaDvZ73HA2qPXv85PBHtUoujd6DlaZqa5yQTWvenEwvSRZPPv4GwJIdXtBLlAVi/exec';
+            <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                    <h3 class="text-lg font-bold text-gray-800">Riwayat Nilai Try Out GO</h3>
+                    <p class="text-sm text-gray-500 mt-1">Sel dengan latar belakang <span class="bg-green-200 px-2 rounded text-green-800 font-bold">hijau</span> adalah 3 nilai terbaik Anda.</p>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left whitespace-nowrap">
+                        <thead class="bg-gray-100 text-gray-600 uppercase text-xs">
+                            <tr>
+                                <th class="px-6 py-3">Try Out</th>
+                                <th class="px-6 py-3">Skor</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody" class="divide-y divide-gray-200">
+                            </tbody>
+                        <tfoot class="bg-blue-50 font-bold">
+                            <tr>
+                                <td class="px-6 py-4 text-blue-900">Rata-rata 3 TO Terbaik</td>
+                                <td class="px-6 py-4 text-blue-900 text-lg" id="resRataRata">0</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
 
-    function cariData() {
-        const nis = document.getElementById('nisInput').value.trim();
-        const loading = document.getElementById('loading');
-        const resultCard = document.getElementById('resultCard');
-        const errorMsg = document.getElementById('errorMsg');
-
-        if (!nis) {
-            alert("Silakan masukkan NIS terlebih dahulu!");
-            return;
-        }
-
-        // Reset UI
-        resultCard.style.display = 'none';
-        errorMsg.style.display = 'none';
-        loading.style.display = 'block';
-
-        // Fetch data ke Google Apps Script
-        fetch(`${scriptURL}?nis=${nis}`)
-            .then(response => response.json())
-            .then(data => {
-                loading.style.display = 'none';
+            <div class="bg-white p-6 rounded-xl shadow-md">
+                <h3 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">Rekomendasi Pilihan Program Studi</h3>
+                <p class="text-gray-600 mb-4 text-sm">Berdasarkan panduan sekolah, acuan pemilihan jurusan Anda menggunakan nilai acuan <strong id="valAcuan"></strong>. Silakan cari program studi di aplikasi GO Expert dengan ketentuan Passing Grade (PG) berikut:</p>
                 
-                if (data.status === 'success') {
-                    // Masukkan data ke dalam HTML
-                    document.getElementById('resNama').innerText = data.data.nama;
-                    document.getElementById('resKelas').innerText = data.data.kelas;
-                    
-                    // Format angka agar koma desimal tampil rapi (opsional)
-                    document.getElementById('resTO110').innerText = formatAngka(data.data.rataRataTO);
-                    document.getElementById('resTOTerbaik').innerText = formatAngka(data.data.rataRataTerbaik);
-                    document.getElementById('resPil1').innerText = formatAngka(data.data.pilihan1);
-                    document.getElementById('resPil2').innerText = formatAngka(data.data.pilihan2);
-                    document.getElementById('resPil34').innerText = formatAngka(data.data.pilihan34);
-                    
-                    resultCard.style.display = 'block';
-                } else {
-                    errorMsg.style.display = 'block';
+                <div class="grid md:grid-cols-3 gap-4">
+                    <div class="bg-indigo-50 border border-indigo-200 p-4 rounded-lg">
+                        <div class="text-indigo-800 font-bold mb-1">Pilihan 1</div>
+                        <div class="text-sm text-gray-600">PG sama dengan atau di bawah:</div>
+                        <div class="text-3xl font-black text-indigo-600 mt-2" id="pgPil1">0</div>
+                        <div class="text-xs text-gray-500 mt-1">(Rata-rata + 30)</div>
+                    </div>
+                    <div class="bg-blue-50 border border-blue-200 p-4 rounded-lg">
+                        <div class="text-blue-800 font-bold mb-1">Pilihan 2</div>
+                        <div class="text-sm text-gray-600">PG sama dengan atau di bawah:</div>
+                        <div class="text-3xl font-black text-blue-600 mt-2" id="pgPil2">0</div>
+                        <div class="text-xs text-gray-500 mt-1">(Sama dengan Rata-rata)</div>
+                    </div>
+                    <div class="bg-teal-50 border border-teal-200 p-4 rounded-lg">
+                        <div class="text-teal-800 font-bold mb-1">Pilihan 3 & 4</div>
+                        <div class="text-sm text-gray-600">PG sama dengan atau di bawah:</div>
+                        <div class="text-3xl font-black text-teal-600 mt-2" id="pgPil34">0</div>
+                        <div class="text-xs text-gray-500 mt-1">(Rata-rata - 30)</div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // ------------------------------------------------------------------
+        // PASTE DATA EXCEL ANDA DI SINI
+        // Copy langsung dari Excel/Spreadsheet dan paste di antara tanda backtick (` `)
+        // Header kolom harus diikutsertakan.
+        // ------------------------------------------------------------------
+        const rawData = `No	NIS	Nama Murid	Kelas Asal	TO Akbar GO	TO 1 GO	TO 2 GO	TO Akbar 2 GO	TO 4 GO	TO 5 GO	TO 6 GO	TO 7 GO	TO 8 GO	TO 9 GO	TO GO 10	RATA- RATA TO 1-10	RATA-RATA 3 TO TERBAIK	PILIHAN 1	PILIHAN 2	PILIHAN 3 & 4
+1	232410001	ABDIE RAUF AFRIZY	XII MIPA 1	618,55	562,44	561,8	600,01	540,54	520,84	573,36	602,46	610,81	659,02	653,35	591,20	643,64	673,64	643,64	613,64
+2	232410002	ABDUL FATHIR ALCHOIRI	XII MIPA 1	661,64	527,63	588,72	666,01	536,11	666,66	655,28	679,86	631,32	649,91	739,45	636,60	695,32	725,32	695,32	665,32
+3	232410012	AL AYYUBI ABID FAUZI	XII MIPA 1	585,23	332,58	317,57	556,19	511,95	349,4	526,01	601,37	575,71	725,18	638,46	519,97	655,00	685,00	655,00	625,00
+4	232410015	ALVIAN ZAIDAN FAHDIA	XII MIPA 1	625,7	621,58	550,05	702,86	587,26	592,29	677,09	652,47	583,81	797,06	715,82	646,00	738,58	768,58	738,58	708,58
+5	232410023	AZKA FATHARRAYZA	XII MIPA 1	698,08	585,98	562,5	683,11	566,26	647,4	657,89	582	608,09	763,83	689,56	640,43	717,16	747,16	717,16	687,16
+6	232410024	BAGAS ARDI NUGROHO	XII MIPA 1	635,01	515,07	553,88	624,18	529,21	536,84	569,24	582,84	597,05	666,36	650,5	587,29	650,62	680,62	650,62	620,62
+7	232410028	DZAKI ACHMAD IZZAN WIARYTSANI	XII MIPA 1	661,61		534,37	636,81	460,05	414,97	676,14	597,18	612,49	681,9	667,9	594,34	675,31	705,31	675,31	645,31
+8	232410030	FAHREZY KHAIRU GHASSANI	XII MIPA 1	673,1	515,59	557,13	568,55	496,5	576,06	613,08	636,43	528,99	603,12	674,39	585,72	661,31	691,31	661,31	631,31
+9	232410031	FAKHRI HAKIM PRASETYO	XII MIPA 1	546,37	519,23	479,71	648,08	538,2	474,14	620,63	535,32	515,79	702,26	654,77	566,77	668,37	698,37	668,37	638,37
+10	232410037	FITYAN FAKIH NUGROHO	XII MIPA 1	593,19	299,89	475,22	635,24	545,19	390,76	505,62	465,54	590,2	611,33	637,43	522,69	628,00	658,00	628,00	598,00
+11	232410040	HADAYA ALFIZA WIDYADANA	XII MIPA 1	745,8	649,48	618,44	741,98	603,17	710,51	770,4	717,54	697,95	714,63	739,71	700,87	752,73	782,73	752,73	722,73
+12	232410042	HAMAM NARDO KALMANI	XII MIPA 1	630,89	532,76	567,47	665,1	555,03	619,72	681,35	752,76	698,7	703,15	719,49	647,86	725,13	755,13	725,13	695,13
+13	232410044	HARRIS ATHMAR ALRIENDRA	XII MIPA 1	777,57	626,59	613,97	751,44	613,02	734,54	702,5	687,43	712,69	789,63	735,1	704,04	772,88	802,88	772,88	742,88
+14	232410046	JAHRAN MUSYAFFA LINGGA GINTARA	XII MIPA 1	605,12	84,95	492,7	648,15	559,53	619,78	634,84	585,35	696,74	734,61	706,16	578,90	712,50	742,50	712,50	682,50
+15	232410049	KENZIE FILHO ASYHARI	XII MIPA 1	727,2	647,66	646,19	739,21	646,82	735,57	728,02	683,48	691,16	815,21	755,76	710,57	770,06	800,06	770,06	740,06
+16	232410055	MUHAFAT FILSANDI	XII MIPA 1	582,52	314,71	369,85	517,17	203,04	214,98	334,63	253,08	594,86		410,8	379,56	564,85	594,85	564,85	534,85
+17	232410057	MUHAMMAD ABIDDAL	XII MIPA 1	340,26	475,69	553,82	670,61	527,41	670,78	624	607,63	601,13	780,92	686,85	594,46	712,85	742,85	712,85	682,85
+18	232410058	MUHAMMAD ADZKA WAHID MAULANA	XII MIPA 1	582,39	583,14	561,02	610,86	552,93	452,24	626,83	570,22	590,51	637,13	631,25	581,68	631,74	661,74	631,74	601,74
+19	232410064	MUHAMMAD DAFFA HANANIA MARDIANTO	XII MIPA 1	631,11	526,82	567,91	645,27	348,79	568,25	604,45	539,68	592,09	619,24	671,23	574,08	649,20	679,20	649,20	619,20
+20	232410067	MUHAMMAD FATA AL FARIZI	XII MIPA 1	680,74	566,63	528,22	655,04	569,72	574,05	626,5	612,16	667,9	761,25	737,21	634,49	726,40	756,40	726,40	696,40
+21	232410071	MUHAMMAD HAFIDZ FURQONI	XII MIPA 1	633,18	431,37	525,74	698,39	592,73	526,65	665,56	704,58	757,92	795,82	689,69	638,33	752,77	782,77	752,77	722,77
+22	232410094	RAFA ALFARIZI	XII MIPA 1	725,3	646,8	625,06	725,48	629,07	767,48	737,31	693,88	656,99	796,58	789,41	708,49	784,49	814,49	784,49	754,49
+23	232410095	RAFA ATHALLAH KAYNO	XII MIPA 1	661,54	550,04	540,82	612,15	544,34	562,44	623,62	619,07	608,6	678,67	684,96	607,84	675,06	705,06	675,06	645,06
+24	232410099	RAGIL PUTRA BASUKI	XII MIPA 1	681,44	614,45	563,59	730,66	591,5	630,17	688,89	676,43	611,97	729,66	750,02	660,80	736,78	766,78	736,78	706,78
+25	232410105	RAYNARA ADYAKSA PRIATNA	XII MIPA 1	684,83	581,89	575,66	668,9	562,21	591,67	663,05	684,35	672,61	681,03	700,72	642,45	689,97	719,97	689,97	659,97
+26	232410106	RENZO FAIZ SYAFATULLAH	XII MIPA 1	620,12	579,69	530,8	660,12	588,68	621,01	609,85	633,41	567,13	706,26	705,43	620,23	690,60	720,60	690,60	660,60
+27	232410108	RIFQI GARDANA	XII MIPA 1	689,38	587,91	564,87	757,57	580,32	627,41	624,45	680,29	630,8	731,7	674,91	649,96	726,22	756,22	726,22	696,22
+28	232410109	RYAAZ MUHAMMAD HAIDAR	XII MIPA 1	675,36	651,24	594,8	753,82	616,99	717,29	778,09	695,57	692	766,87	726,18	697,11	766,26	796,26	766,26	736,26
+29	232410114	TSAVANNARAN AZIZ NUGROHO	XII MIPA 1	717	639,44	389,63	733,87	602,52	692,18	749,29	732,33	637,83	765,68	722,88	671,15	749,61	779,61	749,61	719,61
+30	232410115	UMAIR AHMAD UKASYAH	XII MIPA 1	715,41		594,83	741,51	592,64	630,57	704,63	688,41	636,67	782,13	733,87	682,07	752,50	782,50	752,50	722,50
+31	232410118	ZAKI AKMALI RAMADHAN	XII MIPA 1	705,52	342,41	586,51	705,66	575,51	593,16	640,32	692,42	613,62	727,09	746,02	629,84	726,26	756,26	726,26	696,26
+32	232410121	ZIDANE MUKHLASH PRASTYAN	XII MIPA 1	619,81	307,9	525,9	643,67	529,15	509,71	578,93	502,23	594,7	702,56	708,17	565,70	684,80	714,80	684,80	654,80
+33	232410003	ABDUL MUBDI AL-MUKARROM	XII MIPA 2	646,65	505,65	521,19	659,37	574,95	630,14	585,75	597,72	649	766,04	704,15	621,87	709,85	739,85	709,85	679,85
+34	232410009	AHMAD FIRDAUS BAIHAQI	XII MIPA 2	700,59	316,08	510,74	697,74	542,89	655,41	676,43	657,12	643,56	822,25	748,19	633,73	757,01	787,01	757,01	727,01
+35	232410016	ANDRA FAVIAN AHMAD	XII MIPA 2	708,49	516,63	573,59	707,72	561,5	552,01	606,42	582,95	669,11	700,02	707,28	625,97	707,83	737,83	707,83	677,83
+36	232410020	ATHALLA TEGAR KUSUMA	XII MIPA 2	682,58	443,5	536,11	639,42	526,68	576,17	644,61	657,65	615,46	573,04	664,61	596,35	668,28	698,28	668,28	638,28
+37	232410029	FAHDAREIZA MUHAMMAD	XII MIPA 2	708,51	614,28	595,5	728,91	590,91	658,88	730,31	579,05	689,79	785,25	730,92	673,85	748,83	778,83	748,83	718,83
+38	232410033	FARRAS RAIHAN RAMADHAN	XII MIPA 2	685,42	561,98	575,08	643,95	547,01	546,89	661,29	575,99	644,68	672,04	738,81	623,01	698,76	728,76	698,76	668,76
+39	232410036	FAUZAN HANNIF PRICHSETYO	XII MIPA 2	388,63	364,16	555,43	675,15		578,11	524,53	581,49	604,09	711,01	664,26	564,69	683,47	713,47	683,47	653,47
+40	232410039	GUSTI SULTAN ATHALA HERNOWAN	XII MIPA 2	414,78	630,88	579,45	701,71	597,5	678,45	668,75	654,02	701,55	743,39	782,66	650,29	742,59	772,59	742,59	712,59
+41	232410043	HARITS AHSANI AUZAR	XII MIPA 2	632,6		517,32	577,8	273,54	307,75	455,99	263,33	510,38	504,7	564,3	460,77	591,57	621,57	591,57	561,57
+42	232410048	KENZI FATHUR RAMADHAN	XII MIPA 2	698,12	609,12	587,99	684,58	626,02	461,53	606,7	667,31	667,73	573,45	698,78	625,58	693,83	723,83	693,83	663,83
+43	232410050	KEVIN ANDRIAN	XII MIPA 2	511,3	418,31	356,5	503,99	411,46	359,59	387,9	369,93	419,63	576,28	537,07	441,09	541,55	571,55	541,55	511,55
+44	232410051	LINTANG AHYANAGRA FAUZAN IZYAN KAINDRA	XII MIPA 2	732	654,3	604,76	768,33	615,22	726,02	751,83	751,18	747,69	817,14	804,17	724,79	796,55	826,55	796,55	766,55
+45	232410053	M RAYZEL OMAR SADIQ	XII MIPA 2	674,03	447,56	569,78	649,54	587	547,19	662,87	686,85	674,57	748,46	667,22	628,64	703,29	733,29	703,29	673,29
+46	232410062	MUHAMMAD ARSILNA RAIHAN	XII MIPA 2	639,64	572,97	553,78	648,7	562,36	575,08	598,92	534,54	564,99	635,58	640,21	593,34	642,85	672,85	642,85	612,85
+47	232410063	MUHAMMAD ATTAQI ABDULLAH BATUBARA	XII MIPA 2	714,17	631,73	601,62	740,17	591,66	715,64	771,78	686,72	723,13	807,56	817,8	709,27	799,05	829,05	799,05	769,05
+48	232410069	MUHAMMAD FATTAN FAYDZULHAQ	XII MIPA 2	511,74		380,6	668,81	209,03	457,14	485,49	506,03	551,54	697,57	687,75	515,57	684,71	714,71	684,71	654,71
+49	232410072	MUHAMMAD HAFIZ SAPUTRO	XII MIPA 2	650,63	567,93	538,74	754,15	550,62	679,76	668,43	626,43	552,06	737,39	678,01	636,74	723,77	753,77	723,77	693,77
+50	232410075	MUHAMMAD HILMY RAMADHAN NUGROHO	XII MIPA 2	585,64	574,55	553,21	719,23	616,33	660,66	585,98	680,62	680,34	679,77	620,05	632,40	693,40	723,40	693,40	663,40
+51	232410076	MUHAMMAD IQBAL ALFARABI	XII MIPA 2	703,92	587,78	599,66	702,01	602,7	673,82	688,67	575,41	650,48	794,99	709,61	662,64	736,17	766,17	736,17	706,17
+52	232410077	MUHAMMAD IZZAT RAFI' ANAQI	XII MIPA 2	631,43	341,9	473,94	640,77	491,42	561,21	593,36	571,71	458,09	707,46	732,96	564,02	693,73	723,73	693,73	663,73
+53	232410079	MUHAMMAD NABIL KHAIRI	XII MIPA 2	680,08	616,41	578,08	686,25	509,17	503,15	614,86	589,47	481,24	703,57	737,69	609,09	709,17	739,17	709,17	679,17
+54	232410083	MUHAMMAD ZIYAD ILMANY RAZAQA HARTONO	XII MIPA 2	641,11	606,51	565,18	676,21	597,95	645,87	691,84	607,23	664	681,21	719	645,10	697,35	727,35	697,35	667,35
+55	232410085	NANDA KAFI NUR MUHAMMAD	XII MIPA 2	610,21	287,33	514,86	596,54	498,36	577,56	563,35	597,82	571,2	576,54	710,03	554,89	639,35	669,35	639,35	609,35
+56	232410088	NAUFAL HANIF HAIDARU	XII MIPA 2	637,63	171,59	528,84	634,17	565,66	366,2	630,41	576,48	620,23	722,13	645,57	554,45	668,44	698,44	668,44	638,44
+57	232410089	NAWAF RUZAIN HAKAM	XII MIPA 2	656,8	591,79	602,1	686,84	608,76	696,7	667,57	667,66	725,71	732,32	703,81	667,28	720,61	750,61	720,61	690,61
+58	232411216	PIRES FAHDAN HIBANA	XII MIPA 2	567,33	448,83	432,68	584,44	529,73	467,47	508,26	493,34	450,4	625,77	622,92	521,02	611,04	641,04	611,04	581,04
+59	232410093	RADITYA HASBI PUTRA FERDIAN	XII MIPA 2	556,16	287,42	492,43	591,16	531,78	493,16	571	546,02	661,69	665,98	615,07	546,53	647,58	677,58	647,58	617,58
+60	232410097	RAFIE ATHA SETYAWAN	XII MIPA 2	693,81	639,07	641,51	674,65	604,8	641,89	608,08	639,38	561,36	646,71	714,2	642,31	694,22	724,22	694,22	664,22
+61	232410102	RAPASHA RIFQI RIFAI	XII MIPA 2		315,38	501,11	688,85	595,83	394,7	688,64	578,66	676,82	738,57	765,21	594,38	730,88	760,88	730,88	700,88
+62	232410110	SABDA DAMARA PARINGING GUSTIHADI	XII MIPA 2	619,24	553,67	542,75	651,71	557,57	528,01	678,17	676,17	569,77	690,6	702,92	615,51	690,56	720,56	690,56	660,56
+63	232410120	ZHAFRAN MUHADZDZIB	XII MIPA 2	615,16	628,76	595,4	698,07	606,38	636,86	685,48	644,43	589,82	680,52	671,93	641,16	688,02	718,02	688,02	658,02
+64	232410004	ABIGAIL YUSWIJDAN RAHADYAN	XII MIPA 3	700,76	601,78	562,22	653,92	565,37	610,71	709,6	620,97	631,77	692,52	722,44	642,91	710,93	740,93	710,93	680,93
+65	232410006	ACHMAD ADLI EL SHIRAZY	XII MIPA 3	736,07		579,93	690,91	609,07	726,49	741,68	701,72	666,47	822,25	711,39	698,60	766,67	796,67	766,67	736,67
+66	232410007	AFFAN IZZUDDIN ZAIN	XII MIPA 3	556,42	250,94	543,76	635,9	561,31	617,74	696,08	605,05	586,82	704,61	710,17	588,07	703,62	733,62	703,62	673,62
+67	232410008	AGHA AYYASY	XII MIPA 3	672,07	483,04	486,03	686,25	464,1	514,96	468,63	524,64	571,36	714,68	747,92	575,79	716,28	746,28	716,28	686,28
+68	232410017	ANTAREJA ATILLA ARIF	XII MIPA 3	418,91		589,12	687,58	381,78	791,08	709,3	726,43	640,23	755,64	724,45	642,45	757,72	787,72	757,72	727,72
+69	222310021	ARGYA ALIF ATHILLAH	XII MIPA 3	724,29	344,71	487,31	719,32	592,5	724,01	719,66	687,02	747,83		763,58	651,02	745,23	775,23	745,23	715,23
+70	232410021	ATHAULLAH AL AZZAM LUBIS	XII MIPA 3	608,21	163,04	536,48	641,38	537,98	593,95	619,76	614,42	683,06	721,48	687,77	582,50	697,44	727,44	697,44	667,44
+71	232410026	DANISH MUHAMMAD AZKA	XII MIPA 3	582,94	350	587,56	670,86	595,41	724,01	681,59	670,93	638,36	779,64	743,57	638,62	749,07	779,07	749,07	719,07
+72	232410027	DHIVTAN DAUD VIKTA	XII MIPA 3	588,76	257,76	498,63	582,44	539,68	568,29	631,91	635,53	633,81	691,28	723,15	577,39	683,32	713,32	683,32	653,32
+73	232410034	FATHIR	XII MIPA 3	659,79	372,19	578,11	705,3	572,82	701,7	608,2	683,27	640,51	709,21	710,45	631,05	708,32	738,32	708,32	678,32
+74	232410035	FAUZAN AMRU	XII MIPA 3	572,74		418,39	656,98	471,13	552,02	633,05	660,95	581,07	707,34	654,3	590,80	675,09	705,09	675,09	645,09
+75	232410041	HAFIZH CEZAR SETYAWARDANA	XII MIPA 3	726,35	651,43	646,41	768,74	626,2	662,46	711,03	745,67	708,49	684,01	767,17	699,81	760,53	790,53	760,53	730,53
+76	232410047	KEANU ARGYLL MUBAROQ	XII MIPA 3	569,28		492,81	567,94	324,66	652,89	643,16	704,55	491,64	656,05	685,23	578,82	681,94	711,94	681,94	651,94
+77	232410052	M RAFIE AYDIN AL-BUHORI	XII MIPA 3	689,67	389,15	599,43	725,04	578,15	614,78	676,65	703,23	804,81	747,45	763,45	662,89	771,90	801,90	771,90	741,90
+78	232410059	MUHAMMAD AKRAM ALHANIF	XII MIPA 3	670,93	569,37	554,52	673,73	545,14	570,68	740,8	562,87	684,02	690,13	655,96	628,92	704,98	734,98	704,98	674,98
+79	232410060	MUHAMMAD AR RAAFI FADHLIL ISKANDAR	XII MIPA 3		505,76	441,12	628,6	536,44	356,96	580,97	446,23	489,93	625,09	580,74	519,18	611,55	641,55	611,55	581,55
+80	232410065	MUHAMMAD FADHLI PRADITA RIDLO	XII MIPA 3	646,08	594,58	580,86	667,64	552,55	591,97	717,18	663,61	705,04	647,91	726,81	644,93	716,34	746,34	716,34	686,34
+81	232410066	MUHAMMAD FAKHRI RASYAD	XII MIPA 3	639,11	521,3	536,74	593,76	525,8	512,05		562,34	557,85	641,75	693,18	578,39	658,01	688,01	658,01	628,01
+82	232410068	MUHAMMAD FATHUR AKBAR	XII MIPA 3	662,22	197,01	553,43	721,05	336,3		640,72	635,97	702,38	360,99	726,92	553,70	716,78	746,78	716,78	686,78
+83	232410080	MUHAMMAD NABIL PRIYAMBAR	XII MIPA 3	367,39	489,89	530,3	662,8	410,29	603,18	625,93	696,91	648,66	648,93	689,73	579,46	683,15	713,15	683,15	653,15
+84	232410081	MUHAMMAD RAFA PRASETYA	XII MIPA 3	667,87	404,8	521,63	696,28	583,97	593,89	692,97	712,27	642,44	713,58	693,02	629,34	707,38	737,38	707,38	677,38
+85	232410082	MUHAMMAD SALMAN AL-FARIZI NABIL ASH-SA'AD	XII MIPA 3	655,35	572,12	566,44	759,52	571,4	683,01	719,21	601,59	652,36	724,51	698,1	654,87	734,41	764,41	734,41	704,41
+86	232410086	NARARYA ZAHID FAKHRIADI	XII MIPA 3	759,22	392,84	679,78	751,41	625,57	710,53	772,97	690,14	637,11	774,59	749,21	685,76	768,93	798,93	768,93	738,93
+87	232410092	RADIANT HANIF KUSUMANAGARA	XII MIPA 3	562,82		527,92	682,04	524,88	324,53	555,67	553,31	512,52	577,37	653,92	547,50	637,78	667,78	637,78	607,78
+88	232410103	RASHAD FADHLURRAHMAN AFFANDYPURWANA	XII MIPA 3	538,76	424,97	523,36	614,61	502	461,52	591,91	627,7	680,63	619,2	661,25	567,81	656,53	686,53	656,53	626,53
+89	232410104	RASYA NOURA AQILA	XII MIPA 3	556,53		250,5	591,25		639,24		571,79	590,68	631,64		547,38	620,71	650,71	620,71	590,71
+90	232410209	REYHAN SHAWALA RISKY	XII MIPA 3	520,45	473,05	492,19	553,81	492,28	512,72	557,5	519,26	672,25	600,02	650,55	549,46	640,94	670,94	640,94	610,94
+91	232410107	RIFFAT NUZUL HIDAYAT	XII MIPA 3	553,95	546,99	310,86	673,22	252,35	369,48	603,12	652,94	587,56	677,41	726,64	541,32	692,42	722,42	692,42	662,42
+92	232410116	YAZID REYNARD SETIADI	XII MIPA 3	581,47	597,68	555,99	684,54	529,98	655,43	633,9	593,72	574,88		680,63	608,82	673,53	703,53	673,53	643,53
+93	232410117	YUKINO MARKIYANO HESYA PUTRA	XII MIPA 3	561,99	516,89	313,38	624,07	516,82	622,46	528,4	640,73	572,83	627,26	736,16	569,18	668,05	698,05	668,05	638,05
+94	232410119	ZENTENO ARYA DANISWARA	XII MIPA 3	571,72	589,31	349	758,79	602,72	679,41	593,66	619,2	631,98	750,7	712,02	623,50	740,50	770,50	740,50	710,50
+95	232410122	ZULFAN NUAIM BAIHAQI	XII MIPA 3	564,47	559,52	517,94	582,98	350,17	352,72	616,43	699,95	672,01	694,62	690,76	572,87	695,11	725,11	695,11	665,11
+96	232410005	ABYAN MUHAMMAD	XII IPS	460,07	290,61	471,91	504,14	303,62		459,29	478,23	458,11	524,69	585,32	453,60	538,05	568,05	538,05	508,05
+97	222310006	AHMAD GHIFARI	XII IPS	325,08	385,5	328,15	522,89	324,59	472,42	639,69	638,71	584,99	636,52	695,46	504,91	657,95	687,95	657,95	627,95
+98	232410013	ALBIZARDY FAHMAN HADI	XII IPS	376,16	549,72	596,27	672,99	576,6		578,6		614,04	627,44	685,58	586,38	662,00	692,00	662,00	632,00
+99	232410014	ALFA MARIO	XII IPS	553,39	453,13	538,28	588,42	480,58	350,99	484,27	394,11	417,66	517,31	572,39	486,41	571,40	601,40	571,40	541,40
+100	232410019	ATHA ULLAH AL AZZAM	XII IPS	546,09	227,66	526,98	536,57	304,51	301,64	494,27	428,66			554,25	435,63	545,64	575,64	545,64	515,64
+101	232410022	ATTAYA DZAKKA RAHADIAN	XII IPS	622,83		528,01	588,53	510,92	569,58	614,49	602,51	550,52	657,11	678,17	592,27	652,70	682,70	652,70	622,70
+102	232410025	BILAL RAZA PRASETIAWAN	XII IPS	627,38	368,68	550,52	688,14	492,23	563,1	614,12	607,4	600,46	754,78	732,67	599,95	725,20	755,20	725,20	695,20
+103	232410123	GERALD AL GHOFARI SAPUTRA	XII IPS	513,76	454,31	476,04	520,84	506,2	370,15	423,07	433,24	425,34	590	601,88	483,17	570,91	600,91	570,91	540,91
+104	232410124	HAKEEM RAKHA HARDIANSYAH	XII IPS	523,46	491,93	280,27	557,21	481,16	441,09	541,71	502,6	460,87	562,36	612,97	495,97	577,51	607,51	577,51	547,51
+105	232410045	IKRAM HAMDAN HIDAYAT	XII IPS	351,2	552,68	509,03	605,72	511,07	667,93	600,45	533,07	538,54	651,45	668,65	562,71	662,68	692,68	662,68	632,68
+106	232410212	KEVIN MOHAMMED VIVALDI	XII IPS	634,24	326,13	524,58	688		427,71	587,95	633,19	627,84			556,21	651,81	681,81	651,81	621,81
+107	232410061	MUHAMMAD ARDHIANSYAH	XII IPS	576,34	313,81	511,2	708,09	324,11	507,64	604,38	583,85	670,15	749,02	787,97	576,05	748,36	778,36	748,36	718,36
+108	232410054	MUHAMMAD AUFA SYAIKHAN ABI THALIB	XII IPS	666,73	234,86	603,21	671,58	582,65	656,02	690,76	691,8	672,91	816,49	730,91	637,99	746,40	776,40	746,40	716,40
+109	232410070	MUHAMMAD GILAR YOHANDI	XII IPS	516,49	467,7	463,93	538,14	499,45		456,94	504,56	527,54	562,35	592,23	512,93	564,24	594,24	564,24	534,24
+110	232410073	MUHAMMAD HANIF ADZKIYA	XII IPS		245,7	245,37	610	515,27	315,9	495,04	586,69	454,88	680,68	740,36	488,99	677,01	707,01	677,01	647,01
+111	232410074	MUHAMMAD HANIF ALFATHI	XII IPS	497,87	456,08		511,2	421,92	325,89	474,87	439,93	409,15	533,31	523,39	459,36	522,63	552,63	522,63	492,63
+112	232410078	MUHAMMAD JUAN TSABIT NAWAN	XII IPS	444,23	289,87	437,81	525,94	472,32	429,98	433,09	396,66	480,48	589,9	605,55	464,17	573,80	603,80	573,80	543,80
+113	232411213	MUHAMMAD NABIEL GHAYSAN	XII IPS	432,14		250,01	578,04	326,93	283,82	369,09	329,25	580,27	506,12		406,19	554,81	584,81	554,81	524,81
+114	232410084	NABIL ATALLA AKHTAR	XII IPS			284,97	395,17	78,46	493,46	616,81	573,24	326,79	560,13	658,73	443,08	616,26	646,26	616,26	586,26
+115	232410087	NAUFAL FIRJATULLAH	XII IPS	644,1	169,98	476,24	605,98	507,66	613,31	584,68	532,66	616,08	579,07	692,76	547,50	650,98	680,98	650,98	620,98
+116	232410090	PAMUGA WENING GALIH	XII IPS	570,39	416,11	515,05	633,25	382,42	570,49	460,28	500,08	500,03	632	697,09	534,29	654,11	684,11	654,11	624,11
+117	232410091	PRAYATA DYLAN ISLAMI	XII IPS	622,22		484,11	673,2	589,67	683,66	656,73	640,98	649,81	665,34	725,7	639,14	694,19	724,19	694,19	664,19
+118	232410096	RAFANDRA AQLAN LAZUARDI	XII IPS	571,07	594,23	553,18	644,87	570,64	520,8	589,43	533,27	573,52	625,66	695,27	588,36	655,27	685,27	655,27	625,27
+119	232410098	RAFIENDRA HASTOMOADJI	XII IPS			536,12	674,94	331,65	538,61	601,04	627,13		632,16	492,28	554,24	644,74	674,74	644,74	614,74
+120	232410100	RAIHAN GHALI RAHMAN	XII IPS	536,92		254,53	588,8	427,48		397,45	444,85	496,4	511,44	586,69	471,62	570,80	600,80	570,80	540,80
+121	232410101	RAKHA EZRA SATRIA	XII IPS	464,11	282,9	462	528,12	478,38	456,93	441,26	475,98	446,41	557,95	680,33	479,49	588,80	618,80	588,80	558,80
+122	232411217	RAYAN MEKKA SURYANA	XII IPS	420,71		212,09	141,36	285,58	322,11	339,99	322,16	371,56	459,47	535,42	341,05	471,87	501,87	471,87	441,87
+123	232410111	SATRIA BINTANG RASPATI	XII IPS	624,84	522,25	539,74	591,35	545,46	624,82	653,23	627,33	588,36	779,98	689,97	617,03	707,73	737,73	707,73	677,73
+124	232410113	SYAUQI KHAIRAN AKBAR	XII IPS	383,02	207,68	405,57	489,74	424,7	343,46	412,69	394	408,35	503,06	545,56	410,71	512,79	542,79	512,79	482,79`;
+        // Catatan: Saya hanya menempelkan beberapa data sebagai contoh. 
+        // Silakan paste SEMUA 122 data murid Anda untuk menimpa rawData di atas.
+
+        // Fungsi mengubah string Excel (TSV) menjadi Array of Objects
+        function parseData(dataString) {
+            const lines = dataString.trim().split('\n');
+            const headers = lines[0].split('\t');
+            const result = [];
+
+            for (let i = 1; i < lines.length; i++) {
+                const currentLine = lines[i].split('\t');
+                let obj = {};
+                for (let j = 0; j < headers.length; j++) {
+                    obj[headers[j].trim()] = currentLine[j] ? currentLine[j].trim() : "";
                 }
-            })
-            .catch(error => {
-                loading.style.display = 'none';
-                alert('Terjadi kesalahan jaringan atau server.');
-                console.error('Error!', error.message);
-            });
-    }
-
-    // Fungsi kecil untuk memastikan koma desimal diformat dengan baik jika berupa angka
-    function formatAngka(angka) {
-        if (!isNaN(angka) && angka !== "") {
-            return Number(angka).toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                result.push(obj);
+            }
+            return result;
         }
-        return angka;
-    }
-</script>
 
+        const databaseSiswa = parseData(rawData);
+
+        // Daftar nama kolom Try Out yang ada di data
+        const daftarTO = [
+            "TO Akbar GO", "TO 1 GO", "TO 2 GO", "TO Akbar 2 GO", 
+            "TO 4 GO", "TO 5 GO", "TO 6 GO", "TO 7 GO", 
+            "TO 8 GO", "TO 9 GO", "TO GO 10"
+        ];
+
+        function cariData() {
+            const inputNis = document.getElementById('nisInput').value.trim();
+            const errorMsg = document.getElementById('errorMessage');
+            const resultDiv = document.getElementById('resultContainer');
+
+            // Reset tampilan
+            errorMsg.classList.add('hidden');
+            resultDiv.classList.add('hidden');
+
+            if (!inputNis) return;
+
+            // Cari siswa
+            const siswa = databaseSiswa.find(s => s['NIS'] === inputNis);
+
+            if (!siswa) {
+                errorMsg.classList.remove('hidden');
+                return;
+            }
+
+            // Ekstrak dan bersihkan nilai TO (ubah koma jadi titik, konversi ke float)
+            let scoreObjects = [];
+            daftarTO.forEach(toName => {
+                let rawValue = siswa[toName];
+                let floatValue = 0;
+                
+                if (rawValue) {
+                    // Ganti koma dengan titik untuk desimal
+                    floatValue = parseFloat(rawValue.replace(',', '.'));
+                }
+                
+                scoreObjects.push({
+                    name: toName,
+                    original: rawValue || "-",
+                    value: isNaN(floatValue) ? 0 : floatValue
+                });
+            });
+
+            // Urutkan nilai untuk mencari 3 terbaik
+            const sortedScores = [...scoreObjects].sort((a, b) => b.value - a.value);
+            const top3 = sortedScores.slice(0, 3);
+            const top3Names = top3.map(t => t.name); // Simpan nama TO terbaik untuk diwarnai
+
+            // Hitung rata-rata 3 terbaik (dibulatkan seperti di PDF)
+            const totalTop3 = top3.reduce((sum, item) => sum + item.value, 0);
+            let rataRata = Math.round(totalTop3 / 3);
+            
+            // Jika datanya kosong semua
+            if(rataRata === 0) rataRata = 0; 
+
+            // Update UI Profil Siswa
+            document.getElementById('resNama').innerText = siswa['Nama Murid'];
+            document.getElementById('resNis').innerText = siswa['NIS'];
+            document.getElementById('resKelas').innerText = siswa['Kelas Asal'];
+
+            // Render Tabel Nilai
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = ''; // Bersihkan tabel sebelumnya
+
+            scoreObjects.forEach(score => {
+                const tr = document.createElement('tr');
+                const isTop3 = top3Names.includes(score.name) && score.value > 0;
+                
+                if (isTop3) {
+                    tr.classList.add('top-score');
+                } else {
+                    tr.classList.add('hover:bg-gray-50');
+                }
+
+                tr.innerHTML = `
+                    <td class="px-6 py-3 border-b border-gray-100">${score.name}</td>
+                    <td class="px-6 py-3 border-b border-gray-100">${score.original}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            // Update Rata-rata dan Rekomendasi
+            document.getElementById('resRataRata').innerText = rataRata;
+            document.getElementById('valAcuan').innerText = rataRata;
+
+            document.getElementById('pgPil1').innerText = rataRata + 30;
+            document.getElementById('pgPil2').innerText = rataRata;
+            document.getElementById('pgPil34').innerText = rataRata - 30;
+
+            // Tampilkan hasil
+            resultDiv.classList.remove('hidden');
+        }
+
+        // Jalankan pencarian jika tombol Enter ditekan pada input
+        document.getElementById('nisInput').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                cariData();
+            }
+        });
+    </script>
 </body>
 </html>
