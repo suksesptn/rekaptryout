@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal Cek Nilai Tryout UTBK</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 500px;
+        }
+        h2 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        input[type="text"] {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        button {
+            padding: 12px 20px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        #loading {
+            text-align: center;
+            display: none;
+            color: #7f8c8d;
+            margin-top: 10px;
+        }
+        .result-card {
+            display: none;
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .result-item:last-child {
+            border-bottom: none;
+        }
+        .label {
+            font-weight: bold;
+            color: #555;
+        }
+        .value {
+            color: #2c3e50;
+            text-align: right;
+            font-weight: 500;
+        }
+        .error {
+            color: #e74c3c;
+            text-align: center;
+            margin-top: 15px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Cek Hasil Tryout UTBK</h2>
+    <div class="input-group">
+        <input type="text" id="nisInput" placeholder="Masukkan NIS Anda..." required>
+        <button onclick="cariData()">Cari</button>
+    </div>
+
+    <div id="loading">Mencari data... Mohon tunggu.</div>
+    <div id="errorMsg" class="error">Data tidak ditemukan. Pastikan NIS benar.</div>
+
+    <div id="resultCard" class="result-card">
+        <div class="result-item"><span class="label">Nama:</span> <span class="value" id="resNama">-</span></div>
+        <div class="result-item"><span class="label">Kelas:</span> <span class="value" id="resKelas">-</span></div>
+        <div class="result-item"><span class="label">Rata-Rata TO 1-10:</span> <span class="value" id="resTO110">-</span></div>
+        <div class="result-item"><span class="label">Rata-Rata 3 Terbaik:</span> <span class="value" id="resTOTerbaik">-</span></div>
+        <div class="result-item"><span class="label">Pilihan 1:</span> <span class="value" id="resPil1">-</span></div>
+        <div class="result-item"><span class="label">Pilihan 2:</span> <span class="value" id="resPil2">-</span></div>
+        <div class="result-item"><span class="label">Pilihan 3 & 4:</span> <span class="value" id="resPil34">-</span></div>
+    </div>
+</div>
+
+<script>
+    // PASTE URL WEB APP APPS SCRIPT ANDA DI BAWAH INI
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbxPweaDvZ73HA2qPXv85PBHtUoujd6DlaZqa5yQTWvenEwvSRZPPv4GwJIdXtBLlAVi/exec';
+
+    function cariData() {
+        const nis = document.getElementById('nisInput').value.trim();
+        const loading = document.getElementById('loading');
+        const resultCard = document.getElementById('resultCard');
+        const errorMsg = document.getElementById('errorMsg');
+
+        if (!nis) {
+            alert("Silakan masukkan NIS terlebih dahulu!");
+            return;
+        }
+
+        // Reset UI
+        resultCard.style.display = 'none';
+        errorMsg.style.display = 'none';
+        loading.style.display = 'block';
+
+        // Fetch data ke Google Apps Script
+        fetch(`${scriptURL}?nis=${nis}`)
+            .then(response => response.json())
+            .then(data => {
+                loading.style.display = 'none';
+                
+                if (data.status === 'success') {
+                    // Masukkan data ke dalam HTML
+                    document.getElementById('resNama').innerText = data.data.nama;
+                    document.getElementById('resKelas').innerText = data.data.kelas;
+                    
+                    // Format angka agar koma desimal tampil rapi (opsional)
+                    document.getElementById('resTO110').innerText = formatAngka(data.data.rataRataTO);
+                    document.getElementById('resTOTerbaik').innerText = formatAngka(data.data.rataRataTerbaik);
+                    document.getElementById('resPil1').innerText = formatAngka(data.data.pilihan1);
+                    document.getElementById('resPil2').innerText = formatAngka(data.data.pilihan2);
+                    document.getElementById('resPil34').innerText = formatAngka(data.data.pilihan34);
+                    
+                    resultCard.style.display = 'block';
+                } else {
+                    errorMsg.style.display = 'block';
+                }
+            })
+            .catch(error => {
+                loading.style.display = 'none';
+                alert('Terjadi kesalahan jaringan atau server.');
+                console.error('Error!', error.message);
+            });
+    }
+
+    // Fungsi kecil untuk memastikan koma desimal diformat dengan baik jika berupa angka
+    function formatAngka(angka) {
+        if (!isNaN(angka) && angka !== "") {
+            return Number(angka).toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+        return angka;
+    }
+</script>
+
+</body>
+</html>
